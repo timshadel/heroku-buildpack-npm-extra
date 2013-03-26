@@ -7,4 +7,33 @@ set -e
 # debug
 # set -x
 
+# parse and derive params
+BUILD_DIR=$1
+CACHE_DIR=$2
+
+function error() {
+  echo " !     $*" >&2
+  exit 1
+}
+
+function indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";;
+    *)      sed -u "$c";;
+  esac
+}
+
+function run_npm() {
+  command="$1"
+
+  cd $BUILD_DIR
+  npm_config_prefix="$BUILD_DIR" $VENDORED_NODE/bin/node $VENDORED_NPM/cli.js $command 2>&1 | indent
+
+  if [ "${PIPESTATUS[*]}" != "0 0" ]; then
+    error "Failed to $command dependencies with npm"
+    exit 1
+  fi
+}
+
 run_npm "install --development"
